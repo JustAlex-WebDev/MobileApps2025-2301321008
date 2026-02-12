@@ -3,71 +3,52 @@ package com.mobileapps2025.dooriq.ui.screens
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.Text
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Button
-import androidx.compose.runtime.Composable
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-
-// Data class for classroom
-data class Room(
-    val roomNumber: String,
-    val lecture: String,
-    val lecturer: String,
-    val time: String
-)
+import com.mobileapps2025.dooriq.data.RoomDto
+import com.mobileapps2025.dooriq.data.repository.RoomRepository
 
 @Composable
 fun StudentScreen(
-    rooms: List<Room>,
-    onNavigateToScanner: () -> Unit // callback for QR scanner
+    onNavigateToScanner: () -> Unit
 ) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        // QR Scanner button at the top
+    val repository = remember { RoomRepository() }
+    var rooms by remember { mutableStateOf<List<RoomDto>>(emptyList()) }
+    var loading by remember { mutableStateOf(true) }
+
+    LaunchedEffect(Unit) {
+        try {
+            rooms = repository.getRooms()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+            loading = false
+        }
+    }
+
+    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
         Button(
             onClick = onNavigateToScanner,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
-        ) {
-            Text(text = "Scan QR Code")
-        }
+            modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+        ) { Text("Scan QR Code") }
 
-        // List of rooms
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier.fillMaxSize()
-        ) {
-            items(rooms) { room ->
-                Card(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
-                        Text(
-                            text = "Room: ${room.roomNumber}",
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                        Text(
-                            text = "Lecture: ${room.lecture}",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Text(
-                            text = "Lecturer: ${room.lecturer}",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                        Text(
-                            text = "Time: ${room.time}",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
+        if (loading) {
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                Text("Loading rooms...")
+            }
+        } else {
+            LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                items(rooms) { room ->
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Room: ${room.room_number}")
+                            Text("Lecture: ${room.lecture}")
+                            Text("Lecturer: ${room.lecturer}")
+                            Text("Time: ${room.time}")
+                        }
                     }
                 }
             }
